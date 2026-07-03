@@ -1,0 +1,20 @@
+{
+    "version": "0.1.0",
+    "description": "A structured agent runtime for LLMs",
+    "homepage": "https://leviath.dev",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/GEMISIS/leviath-dist/releases/download/v0.1.0/leviath-windows-x64.zip",
+            "bin": "lev.exe"
+        }
+    },
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/GEMISIS/leviath-dist/releases/download/v$version/leviath-windows-x64.zip"
+            }
+        }
+    }
+}
