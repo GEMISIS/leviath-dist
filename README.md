@@ -24,6 +24,34 @@ Most agent tools give LLMs a flat message array and hope for the best. Leviath g
 
 Pick a pre-built agent or create your own. Run it. Watch it actually remember what it read 50 tool calls ago.
 
+## ⚠️ Private Alpha — Setup Required
+
+This repo and its releases are **private**. Before installing, you'll need a GitHub Personal Access Token (PAT) with `repo` scope:
+
+1. Go to [github.com/settings/tokens](https://github.com/settings/tokens) → **Generate new token (classic)**
+2. Select the **`repo`** scope (full control of private repositories)
+3. Generate and copy the token
+
+Then configure it for your platform:
+
+**macOS / Linux** — add to your shell profile (`~/.zshrc`, `~/.bashrc`, etc.):
+
+```bash
+export HOMEBREW_GITHUB_API_TOKEN="ghp_your_token_here"  # macOS (Homebrew)
+export GITHUB_TOKEN="ghp_your_token_here"                # Linux (install script)
+```
+
+**Windows** — set as an environment variable:
+
+```powershell
+# PowerShell — add to your $PROFILE for persistence
+$env:SCOOP_GH_TOKEN = "ghp_your_token_here"
+
+# Or set it system-wide via Settings → Environment Variables
+```
+
+> **Note:** You also need to be added as a collaborator on this repo. If you can read this, you're good.
+
 ## Installation
 
 ### macOS (Homebrew)
