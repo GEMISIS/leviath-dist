@@ -9,13 +9,13 @@
 
 | Linux | macOS | Windows | Coverage |
 | :-: | :-: | :-: | :-: |
-| [![Linux](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml/badge.svg?branch=main&event=push&job=Test%20%28ubuntu-latest%29)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) | [![macOS](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml/badge.svg?branch=main&event=push&job=Test%20%28macos-latest%29)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) | [![Windows](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml/badge.svg?branch=main&event=push&job=Test%20%28windows-latest%29)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) | [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-coverage-lines.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) |
+| [![Linux](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-ubuntu-latest.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) | [![macOS](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-macos-latest.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) | [![Windows](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-windows-latest.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) | [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-coverage-lines.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) |
 
 </div>
 
 <p align="center">
-  <a href="https://leviath.dev"><img src="https://img.shields.io/badge/docs-leviath.dev-8b5cf6" alt="Docs"></a>
   <a href="https://github.com/GEMISIS/leviath/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://leviath.dev"><img src="https://img.shields.io/badge/docs-leviath.dev-8b5cf6" alt="Docs"></a>
 </p>
 
 ---
