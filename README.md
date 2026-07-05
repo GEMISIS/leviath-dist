@@ -32,23 +32,29 @@ This repo and its releases are **private**. Before installing, you'll need a Git
 2. Select the **`repo`** scope (full control of private repositories)
 3. Generate and copy the token
 
-Then configure it for your platform:
+Then configure git to authenticate with private Sun-Forge-AI repos:
 
-**macOS / Linux** — add to your shell profile (`~/.zshrc`, `~/.bashrc`, etc.):
+**macOS / Linux:**
 
 ```bash
-export HOMEBREW_GITHUB_API_TOKEN="ghp_your_token_here"  # macOS (Homebrew)
-export GITHUB_TOKEN="ghp_your_token_here"                # Linux (install script)
+# Replace ghp_your_token_here with your actual PAT
+git config --global url."https://ghp_your_token_here@github.com/Sun-Forge-AI/".insteadOf "https://github.com/Sun-Forge-AI/"
+
+# For the Linux install script, also export the token:
+export GITHUB_TOKEN="ghp_your_token_here"  # add to ~/.zshrc or ~/.bashrc
 ```
 
-**Windows** — set as an environment variable:
+**Windows:**
 
 ```powershell
-# PowerShell — add to your $PROFILE for persistence
-$env:SCOOP_GH_TOKEN = "ghp_your_token_here"
+# Replace ghp_your_token_here with your actual PAT
+git config --global url."https://ghp_your_token_here@github.com/Sun-Forge-AI/".insteadOf "https://github.com/Sun-Forge-AI/"
 
-# Or set it system-wide via Settings → Environment Variables
+# For Scoop, also set:
+$env:SCOOP_GH_TOKEN = "ghp_your_token_here"  # add to $PROFILE for persistence
 ```
+
+This tells git to embed your token when accessing Sun-Forge-AI repos, which is required for `brew tap`, `scoop bucket add`, and release downloads.
 
 > **Note:** You also need to be added as a collaborator on this repo. If you can read this, you're good.
 
