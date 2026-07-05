@@ -5,25 +5,21 @@ class Leviath < Formula
   desc "A structured agent runtime for LLMs"
   homepage "https://leviath.dev"
   license "MIT"
-  version "0.1.0"
+  version "0.1.0-alpha"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/Sun-Forge-AI/leviath/releases/download/v#{version}/leviath-macos-arm64.tar.gz"
-      # sha256 "REPLACE_WITH_ACTUAL_SHA256_ARM64"
+      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-macos-arm64.tar.gz"
     else
-      url "https://github.com/Sun-Forge-AI/leviath/releases/download/v#{version}/leviath-macos-x64.tar.gz"
-      # sha256 "REPLACE_WITH_ACTUAL_SHA256_X64"
+      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-macos-x64.tar.gz"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/Sun-Forge-AI/leviath/releases/download/v#{version}/leviath-linux-arm64.tar.gz"
-      # sha256 "REPLACE_WITH_ACTUAL_SHA256_LINUX_ARM64"
+      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-linux-arm64.tar.gz"
     else
-      url "https://github.com/Sun-Forge-AI/leviath/releases/download/v#{version}/leviath-linux-x64.tar.gz"
-      # sha256 "REPLACE_WITH_ACTUAL_SHA256_LINUX_X64"
+      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-linux-x64.tar.gz"
     end
   end
 
