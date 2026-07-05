@@ -5,7 +5,7 @@
 #
 set -euo pipefail
 
-REPO="Sun-Forge-AI/leviath-dist"
+REPO="Sun-Forge-AI/leviath"
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="lev"
 
