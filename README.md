@@ -9,12 +9,12 @@
 
 | Linux | macOS | Windows | Coverage |
 | :-: | :-: | :-: | :-: |
-| [![Linux](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-ubuntu-latest.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) | [![macOS](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-macos-latest.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) | [![Windows](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-windows-latest.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) | [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-coverage-lines.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) |
+| [![Linux](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-ubuntu-latest.json)](https://github.com/Sun-Forge-AI/leviath/actions/workflows/ci.yml) | [![macOS](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-macos-latest.json)](https://github.com/Sun-Forge-AI/leviath/actions/workflows/ci.yml) | [![Windows](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-windows-latest.json)](https://github.com/Sun-Forge-AI/leviath/actions/workflows/ci.yml) | [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-coverage-lines.json)](https://github.com/Sun-Forge-AI/leviath/actions/workflows/ci.yml) |
 
 </div>
 
 <p align="center">
-  <a href="https://github.com/GEMISIS/leviath/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://github.com/Sun-Forge-AI/leviath/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
   <a href="https://leviath.dev"><img src="https://img.shields.io/badge/docs-leviath.dev-8b5cf6" alt="Docs"></a>
 </p>
 
@@ -57,7 +57,7 @@ $env:SCOOP_GH_TOKEN = "ghp_your_token_here"
 ### macOS (Homebrew)
 
 ```bash
-brew tap gemisis/leviath https://github.com/GEMISIS/leviath-dist.git
+brew tap sun-forge-ai/leviath https://github.com/Sun-Forge-AI/leviath-dist.git
 brew install leviath
 ```
 
@@ -72,12 +72,12 @@ brew update && brew upgrade leviath
 **Quick install** (x86_64):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/GEMISIS/leviath-dist/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash
 ```
 
 **Manual install:**
 
-1. Download the latest release from [GitHub Releases](https://github.com/GEMISIS/leviath-dist/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/Sun-Forge-AI/leviath-dist/releases)
 2. Extract and move to your PATH:
 
 ```bash
@@ -90,7 +90,7 @@ sudo mv lev /usr/local/bin/
 **Scoop** (recommended):
 
 ```powershell
-scoop bucket add leviath https://github.com/GEMISIS/leviath-dist.git
+scoop bucket add leviath https://github.com/Sun-Forge-AI/leviath-dist.git
 scoop install leviath
 ```
 
@@ -102,7 +102,7 @@ scoop update leviath
 
 **Manual install:**
 
-1. Download `leviath-windows-x64.zip` from [GitHub Releases](https://github.com/GEMISIS/leviath-dist/releases)
+1. Download `leviath-windows-x64.zip` from [GitHub Releases](https://github.com/Sun-Forge-AI/leviath-dist/releases)
 2. Extract `lev.exe`
 3. Add the folder containing `lev.exe` to your `PATH`
 
@@ -111,7 +111,7 @@ scoop update leviath
 Requires [Rust](https://rustup.rs/) (stable toolchain):
 
 ```bash
-cargo install --git https://github.com/GEMISIS/leviath.git --bin lev
+cargo install --git https://github.com/Sun-Forge-AI/leviath.git --bin lev
 ```
 
 ## Quick Start
@@ -213,5 +213,5 @@ Nine agents ship out of the box:
 ## Links
 
 - 📖 [Documentation](https://leviath.dev/docs)
-- 🐛 [Report an Issue](https://github.com/GEMISIS/leviath/issues)
-- 📜 [License (MIT)](https://github.com/GEMISIS/leviath/blob/main/LICENSE)
+- 🐛 [Report an Issue](https://github.com/Sun-Forge-AI/leviath/issues)
+- 📜 [License (MIT)](https://github.com/Sun-Forge-AI/leviath/blob/main/LICENSE)

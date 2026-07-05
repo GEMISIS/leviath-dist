@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
 # Leviath installer for Linux and macOS
-# Usage: curl -fsSL https://raw.githubusercontent.com/GEMISIS/leviath-dist/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash
 #
 set -euo pipefail
 
-REPO="GEMISIS/leviath-dist"
+REPO="Sun-Forge-AI/leviath-dist"
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="lev"
 

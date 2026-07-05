@@ -5,7 +5,7 @@
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/GEMISIS/leviath-dist/releases/download/v0.1.0/leviath-windows-x64.zip",
+            "url": "https://github.com/Sun-Forge-AI/leviath-dist/releases/download/v0.1.0/leviath-windows-x64.zip",
             "bin": "lev.exe"
         }
     },
@@ -13,7 +13,7 @@
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/GEMISIS/leviath-dist/releases/download/v$version/leviath-windows-x64.zip"
+                "url": "https://github.com/Sun-Forge-AI/leviath-dist/releases/download/v$version/leviath-windows-x64.zip"
             }
         }
     }
