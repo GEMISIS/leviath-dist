@@ -58,32 +58,58 @@ This tells git to embed your token when accessing Sun-Forge-AI repos, which is r
 
 > **Note:** You also need to be added as a collaborator on this repo. If you can read this, you're good.
 
+## Release Channels
+
+Leviath has three release channels. **Only alpha is currently available.**
+
+| Channel | Schedule | Stability | Install command |
+|---------|----------|-----------|-----------------|
+| **Alpha** | Nightly | ⚠️ Bleeding edge | `brew install leviath-alpha` |
+| **Beta** | Weekly (Monday) | 🟡 Tested | `brew install leviath-beta` (coming soon) |
+| **Stable** | Weekly (Thursday, approved) | ✅ Production | `brew install leviath` (coming soon) |
+
 ## Installation
 
 ### macOS (Homebrew)
 
 ```bash
+# Add the tap (one time)
 brew tap sun-forge-ai/leviath https://github.com/Sun-Forge-AI/leviath-dist.git
-brew install leviath
+
+# Install alpha (currently the only available channel)
+brew install leviath-alpha
+
+# Future: install stable or beta
+# brew install leviath
+# brew install leviath-beta
 ```
 
 To update:
 
 ```bash
-brew update && brew upgrade leviath
+brew update && brew upgrade leviath-alpha
 ```
+
+> **Note:** Only one channel can be installed at a time. Switch channels with `brew uninstall leviath-alpha && brew install leviath-beta`.
 
 ### Linux
 
-**Quick install** (x86_64):
+**Quick install** (alpha channel, x86_64/arm64):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash
 ```
 
+To install a specific channel:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash -s -- --channel alpha
+# Also: --channel beta, --channel stable (when available)
+```
+
 **Manual install:**
 
-1. Download the latest release from [GitHub Releases](https://github.com/Sun-Forge-AI/leviath-dist/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/Sun-Forge-AI/leviath/releases)
 2. Extract and move to your PATH:
 
 ```bash
@@ -97,18 +123,22 @@ sudo mv lev /usr/local/bin/
 
 ```powershell
 scoop bucket add leviath https://github.com/Sun-Forge-AI/leviath-dist.git
-scoop install leviath
+
+# Install alpha (currently the only available channel)
+scoop install leviath-alpha
+
+# Future: scoop install leviath / leviath-beta
 ```
 
 To update:
 
 ```powershell
-scoop update leviath
+scoop update leviath-alpha
 ```
 
 **Manual install:**
 
-1. Download `leviath-windows-x64.zip` from [GitHub Releases](https://github.com/Sun-Forge-AI/leviath-dist/releases)
+1. Download `leviath-windows-x64.zip` from [GitHub Releases](https://github.com/Sun-Forge-AI/leviath/releases)
 2. Extract `lev.exe`
 3. Add the folder containing `lev.exe` to your `PATH`
 

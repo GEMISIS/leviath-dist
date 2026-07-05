@@ -1,0 +1,12 @@
+{
+    "version": "0.1.0-beta",
+    "description": "A structured agent runtime for LLMs (weekly beta)",
+    "homepage": "https://leviath.dev",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/Sun-Forge-AI/leviath/releases/download/beta/leviath-windows-x64.zip",
+            "bin": "lev.exe"
+        }
+    }
+}
