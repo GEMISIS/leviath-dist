@@ -38,11 +38,20 @@ Then configure git to authenticate with private Sun-Forge-AI repos:
 
 ```bash
 # Replace ghp_your_token_here with your actual PAT
+
+# Lets git clone the private tap/bucket (used by `brew tap` / `scoop bucket add`)
 git config --global url."https://ghp_your_token_here@github.com/Sun-Forge-AI/".insteadOf "https://github.com/Sun-Forge-AI/"
+
+# Lets Homebrew download the private release binaries (git config does NOT
+# cover this -- brew fetches assets with curl via the GitHub API):
+export HOMEBREW_GITHUB_API_TOKEN="ghp_your_token_here"  # add to ~/.zshrc or ~/.bashrc
 
 # For the Linux install script, also export the token:
 export GITHUB_TOKEN="ghp_your_token_here"  # add to ~/.zshrc or ~/.bashrc
 ```
+
+> Already using the [GitHub CLI](https://cli.github.com)? You can skip the exports —
+> the formulas fall back to `gh auth token` automatically.
 
 **Windows:**
 
@@ -54,7 +63,7 @@ git config --global url."https://ghp_your_token_here@github.com/Sun-Forge-AI/".i
 $env:SCOOP_GH_TOKEN = "ghp_your_token_here"  # add to $PROFILE for persistence
 ```
 
-This tells git to embed your token when accessing Sun-Forge-AI repos, which is required for `brew tap`, `scoop bucket add`, and release downloads.
+The git config covers `brew tap` and `scoop bucket add` (git clones). The exported tokens cover the actual binary downloads, which go through the GitHub API — private release assets return 404 for plain URL fetches, even authenticated ones.
 
 > **Note:** You also need to be added as a collaborator on this repo. If you can read this, you're good.
 
@@ -75,6 +84,9 @@ Leviath has three release channels. **Only alpha is currently available.**
 ```bash
 # Add the tap (one time)
 brew tap sun-forge-ai/leviath https://github.com/Sun-Forge-AI/leviath-dist.git
+
+# Newer Homebrew requires explicitly trusting third-party taps (one time)
+brew trust sun-forge-ai/leviath
 
 # Install alpha (currently the only available channel)
 brew install leviath-alpha

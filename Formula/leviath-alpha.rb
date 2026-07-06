@@ -1,6 +1,8 @@
 # typed: false
 # frozen_string_literal: true
 
+require_relative "../lib/private_strategy"
+
 class LeviathAlpha < Formula
   desc "A structured agent runtime for LLMs (nightly alpha)"
   homepage "https://leviath.dev"
@@ -9,17 +11,21 @@ class LeviathAlpha < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-macos-arm64.tar.gz"
+      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-macos-arm64.tar.gz",
+          using: GitHubPrivateRepositoryReleaseDownloadStrategy
     else
-      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-macos-x64.tar.gz"
+      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-macos-x64.tar.gz",
+          using: GitHubPrivateRepositoryReleaseDownloadStrategy
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-linux-arm64.tar.gz"
+      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-linux-arm64.tar.gz",
+          using: GitHubPrivateRepositoryReleaseDownloadStrategy
     else
-      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-linux-x64.tar.gz"
+      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-linux-x64.tar.gz",
+          using: GitHubPrivateRepositoryReleaseDownloadStrategy
     end
   end
 

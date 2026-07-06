@@ -103,8 +103,18 @@ TAG="$(echo "$RELEASE_JSON" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name":
 
 info "Release tag: ${TAG}"
 
-# Find the download URL for our asset
-DOWNLOAD_URL="$(echo "$RELEASE_JSON" | grep "browser_download_url" | grep "$ASSET_NAME" | head -1 | sed 's/.*"browser_download_url": *"//;s/".*//')"
+# Find the download URL for our asset.
+# Private repos: browser_download_url returns 404 even WITH a token — assets
+# must be fetched through the API asset endpoint (releases/assets/<id>) with
+# Accept: application/octet-stream. Public repos can use the plain URL.
+if [ -n "$AUTH_HEADER" ]; then
+    DOWNLOAD_URL="$(echo "$RELEASE_JSON" | awk -v name="$ASSET_NAME" '
+        /"url": *"[^"]*\/releases\/assets\// { url=$0; sub(/.*"url": *"/, "", url); sub(/".*/, "", url) }
+        /"name": *"/ { n=$0; sub(/.*"name": *"/, "", n); sub(/".*/, "", n); if (n == name && url != "") { print url; exit } }
+    ')"
+else
+    DOWNLOAD_URL="$(echo "$RELEASE_JSON" | grep "browser_download_url" | grep "$ASSET_NAME" | head -1 | sed 's/.*"browser_download_url": *"//;s/".*//')"
+fi
 [ -n "$DOWNLOAD_URL" ] || err "No release asset found for ${ASSET_NAME}. Check available assets at https://github.com/${REPO}/releases"
 
 # Download and extract
