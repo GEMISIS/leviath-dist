@@ -59,8 +59,8 @@ export GITHUB_TOKEN="ghp_your_token_here"  # add to ~/.zshrc or ~/.bashrc
 # Replace ghp_your_token_here with your actual PAT
 git config --global url."https://ghp_your_token_here@github.com/Sun-Forge-AI/".insteadOf "https://github.com/Sun-Forge-AI/"
 
-# For Scoop, also set:
-$env:SCOOP_GH_TOKEN = "ghp_your_token_here"  # add to $PROFILE for persistence
+# For the install script:
+$env:GITHUB_TOKEN = "ghp_your_token_here"  # add to $PROFILE for persistence
 ```
 
 The git config covers `brew tap` and `scoop bucket add` (git clones). The exported tokens cover the actual binary downloads, which go through the GitHub API — private release assets return 404 for plain URL fetches, even authenticated ones.
@@ -69,13 +69,13 @@ The git config covers `brew tap` and `scoop bucket add` (git clones). The export
 
 ## Release Channels
 
-Leviath has three release channels. **Only alpha is currently available.**
+Leviath has three release channels:
 
 | Channel | Schedule | Stability | Install command |
 |---------|----------|-----------|-----------------|
 | **Alpha** | Nightly | ⚠️ Bleeding edge | `brew install leviath-alpha` |
-| **Beta** | Weekly (Monday) | 🟡 Tested | `brew install leviath-beta` (coming soon) |
-| **Stable** | Weekly (Thursday, approved) | ✅ Production | `brew install leviath` (coming soon) |
+| **Beta** | Weekly (Monday) | 🟡 Tested | `brew install leviath-beta` |
+| **Stable** | Weekly (Thursday, approved) | ✅ Production | `brew install leviath` |
 
 ## Installation
 
@@ -88,12 +88,8 @@ brew tap sun-forge-ai/leviath https://github.com/Sun-Forge-AI/leviath-dist.git
 # Newer Homebrew requires explicitly trusting third-party taps (one time)
 brew trust sun-forge-ai/leviath
 
-# Install alpha (currently the only available channel)
-brew install leviath-alpha
-
-# Future: install stable or beta
-# brew install leviath
-# brew install leviath-beta
+# Install your channel of choice
+brew install leviath-alpha   # or: leviath-beta, leviath (stable)
 ```
 
 To update:
@@ -106,17 +102,18 @@ brew update && brew upgrade leviath-alpha
 
 ### Linux
 
-**Quick install** (alpha channel, x86_64/arm64):
+**Quick install** (alpha channel, x86_64/arm64). While the repo is private, the
+raw URL itself needs your token too:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash
+curl -fsSL -H "Authorization: token $GITHUB_TOKEN" https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash
 ```
 
 To install a specific channel:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash -s -- --channel alpha
-# Also: --channel beta, --channel stable (when available)
+curl -fsSL -H "Authorization: token $GITHUB_TOKEN" https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash -s -- --channel beta
+# Channels: alpha (default), beta, stable
 ```
 
 **Manual install:**
@@ -131,21 +128,23 @@ sudo mv lev /usr/local/bin/
 
 ### Windows
 
-**Scoop** (recommended):
+**Install script** (recommended while the repo is private — Scoop cannot
+download private release assets):
+
+```powershell
+$env:GITHUB_TOKEN = "ghp_your_token_here"   # PAT with repo scope
+irm -Headers @{Authorization="token $env:GITHUB_TOKEN"} https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.ps1 | iex
+```
+
+This installs `lev.exe` to `%LOCALAPPDATA%\Leviath\bin` and adds it to your
+user `PATH`. Re-run the same command to update. To pick a channel, download
+the script and run `.\install.ps1 -Channel beta` (or `stable`).
+
+**Scoop** (available once the repo goes public):
 
 ```powershell
 scoop bucket add leviath https://github.com/Sun-Forge-AI/leviath-dist.git
-
-# Install alpha (currently the only available channel)
 scoop install leviath-alpha
-
-# Future: scoop install leviath / leviath-beta
-```
-
-To update:
-
-```powershell
-scoop update leviath-alpha
 ```
 
 **Manual install:**
