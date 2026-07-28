@@ -113,7 +113,13 @@ install it. Re-run to retry, and report it if it persists.
 # Add the install dir to the user PATH if it isn't there yet.
 $UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
 if (($UserPath -split ";") -notcontains $InstallDir) {
-    [Environment]::SetEnvironmentVariable("Path", "$UserPath;$InstallDir", "User")
+    # `"$UserPath;$InstallDir"` with an unset User-scope Path -- common, since
+    # Path often lives only in Machine scope -- writes a leading `;`. Windows
+    # resolves an empty PATH entry as **the current directory**, so every
+    # command typed anywhere would then be hijackable by a dropped .exe in
+    # whatever folder the user happened to be in.
+    $NewPath = if ($UserPath) { "$UserPath;$InstallDir" } else { $InstallDir }
+    [Environment]::SetEnvironmentVariable("Path", $NewPath, "User")
     Write-Host "==> Added $InstallDir to your user PATH (open a new terminal to pick it up)"
 }
 $env:Path = "$env:Path;$InstallDir"

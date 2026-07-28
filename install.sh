@@ -201,11 +201,16 @@ LEV_BIN="$(find "$TMPDIR" -name "$BINARY_NAME" -type f | head -1)"
 chmod +x "$LEV_BIN"
 
 # Install
+# `install` rather than `mv`: the temp dir and ${INSTALL_DIR} are usually
+# different filesystems, so `mv` is a copy followed by an unlink — an
+# interruption partway leaves a truncated `lev` on PATH. `install` writes to a
+# temporary name and renames, and sets the mode explicitly rather than inheriting
+# whatever the archive carried.
 if [ -w "$INSTALL_DIR" ]; then
-    mv "$LEV_BIN" "${INSTALL_DIR}/${BINARY_NAME}"
+    install -m 755 "$LEV_BIN" "${INSTALL_DIR}/${BINARY_NAME}"
 else
     info "Installing to ${INSTALL_DIR} (requires sudo)..."
-    sudo mv "$LEV_BIN" "${INSTALL_DIR}/${BINARY_NAME}"
+    sudo install -m 755 "$LEV_BIN" "${INSTALL_DIR}/${BINARY_NAME}"
 fi
 
 ok "Leviath (${CHANNEL}) installed to ${INSTALL_DIR}/${BINARY_NAME}"
