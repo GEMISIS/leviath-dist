@@ -6,6 +6,7 @@
     "architecture": {
         "64bit": {
             "url": "https://github.com/Sun-Forge-AI/leviath/releases/download/v0.1.0/leviath-windows-x64.zip",
+            "hash": "https://github.com/Sun-Forge-AI/leviath/releases/download/v0.1.0/SHA256SUMS",
             "bin": "lev.exe"
         }
     },
