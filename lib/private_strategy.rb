@@ -16,7 +16,9 @@ require "utils/popen"
 # `Accept: application/octet-stream`, which is what this strategy does.
 #
 # Every download is verified against the release's own SHA256SUMS before it is
-# handed to Homebrew. A formula normally pins a literal `sha256`, but these are
+# handed to Homebrew. Note that Homebrew only calls `_fetch` when it actually
+# downloads: an archive already in its cache is reused without re-running this,
+# which is the same trust boundary as the rest of the user's own cache. A formula normally pins a literal `sha256`, but these are
 # rolling channel tags — `alpha` is re-uploaded on every build — so a pinned
 # hash would be wrong within a day. Verifying against the checksums file
 # published beside the asset keeps the guarantee without pinning. See the
