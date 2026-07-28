@@ -123,7 +123,14 @@ class GitHubPrivateRepositoryReleaseDownloadStrategy < CurlDownloadStrategy
     end
 
     actual = Digest::SHA256.file(path).hexdigest
-    return if actual.casecmp?(expected)
+    if actual.casecmp?(expected)
+      # Say so explicitly. Homebrew prints "Cannot verify integrity ... No
+      # checksum was provided" whenever a formula carries no literal `sha256`,
+      # which is the opposite of what just happened — without this line the last
+      # word a user reads is that nothing was checked.
+      ohai "Verified #{@filename} against #{CHECKSUM_FILE} (#{expected})"
+      return
+    end
 
     path.unlink if path.exist?
     raise CurlDownloadStrategyError, <<~EOS
