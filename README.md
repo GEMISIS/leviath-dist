@@ -9,7 +9,7 @@
 
 | Linux | macOS | Windows | Coverage |
 | :-: | :-: | :-: | :-: |
-| [![Linux](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-ubuntu-latest.json)](https://github.com/Sun-Forge-AI/leviath/actions/workflows/ci.yml) | [![macOS](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-macos-latest.json)](https://github.com/Sun-Forge-AI/leviath/actions/workflows/ci.yml) | [![Windows](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-windows-latest.json)](https://github.com/Sun-Forge-AI/leviath/actions/workflows/ci.yml) | [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-coverage-lines.json)](https://github.com/Sun-Forge-AI/leviath/actions/workflows/ci.yml) |
+| [![Linux](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-ubuntu-latest.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) | [![macOS](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-macos-latest.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) | [![Windows](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-test-windows-latest.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) | [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GEMISIS/b35e030175e78fad8e3562e58be21c60/raw/leviath-coverage-lines.json)](https://github.com/GEMISIS/leviath/actions/workflows/ci.yml) |
 
 </div>
 
@@ -24,7 +24,7 @@ Most agent tools give LLMs a flat message array and hope for the best. Leviath g
 
 Pick a pre-built agent or create your own. Run it. Watch it actually remember what it read 50 tool calls ago.
 
-This repo is the **distribution channel**: the Homebrew tap, the Scoop bucket, and the install scripts. The runtime itself lives in [Sun-Forge-AI/leviath](https://github.com/Sun-Forge-AI/leviath). No account or token is needed to install — everything is public.
+This repo is the **distribution channel**: the Homebrew tap, the Scoop bucket, and the install scripts. The runtime itself lives in [GEMISIS/leviath](https://github.com/GEMISIS/leviath). No account or token is needed to install — everything is public.
 
 ## Release Channels
 
@@ -44,7 +44,7 @@ flowchart LR
     SCOOP["Scoop bucket<br/>(bucket/*.json)"] --> TAGS
     SH["install.sh<br/>(Linux / macOS)"] --> TAGS
     PS["install.ps1<br/>(Windows)"] --> TAGS
-    subgraph TAGS["Release tags on Sun-Forge-AI/leviath"]
+    subgraph TAGS["Release tags on GEMISIS/leviath"]
         A["alpha"]
         B["beta"]
         S["latest (stable)"]
@@ -59,10 +59,10 @@ flowchart LR
 
 ```bash
 # Add the tap (one time)
-brew tap sun-forge-ai/leviath https://github.com/Sun-Forge-AI/leviath-dist.git
+brew tap gemisis/leviath https://github.com/GEMISIS/leviath-dist.git
 
 # Homebrew 6 requires explicitly trusting third-party taps (one time)
-brew trust sun-forge-ai/leviath
+brew trust gemisis/leviath
 
 # Install your channel of choice
 brew install leviath         # stable - or: leviath-beta, leviath-alpha
@@ -79,13 +79,13 @@ brew update && brew upgrade leviath
 ### Linux (install script)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash -s -- --channel stable
+curl -fsSL https://raw.githubusercontent.com/GEMISIS/leviath-dist/main/install.sh | bash -s -- --channel stable
 # Channels: alpha (default when omitted), beta, stable
 ```
 
 **Manual install:**
 
-1. Download the latest release from [GitHub Releases](https://github.com/Sun-Forge-AI/leviath/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/GEMISIS/leviath/releases)
 2. Extract and move to your PATH:
 
 ```bash
@@ -98,14 +98,14 @@ sudo mv lev /usr/local/bin/
 **Scoop** (recommended):
 
 ```powershell
-scoop bucket add leviath https://github.com/Sun-Forge-AI/leviath-dist.git
+scoop bucket add leviath https://github.com/GEMISIS/leviath-dist.git
 scoop install leviath        # stable - or: leviath-beta, leviath-alpha
 ```
 
 **Install script:**
 
 ```powershell
-irm https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/GEMISIS/leviath-dist/main/install.ps1 | iex
 ```
 
 This installs `lev.exe` to `%LOCALAPPDATA%\Leviath\bin` and adds it to your
@@ -114,7 +114,7 @@ the script and run `.\install.ps1 -Channel beta` (or `stable`).
 
 **Manual install:**
 
-1. Download `leviath-windows-x64.zip` from [GitHub Releases](https://github.com/Sun-Forge-AI/leviath/releases)
+1. Download `leviath-windows-x64.zip` from [GitHub Releases](https://github.com/GEMISIS/leviath/releases)
 2. Extract `lev.exe`
 3. Add the folder containing `lev.exe` to your `PATH`
 
@@ -123,7 +123,7 @@ the script and run `.\install.ps1 -Channel beta` (or `stable`).
 Requires [Rust](https://rustup.rs/) (stable toolchain):
 
 ```bash
-cargo install --git https://github.com/Sun-Forge-AI/leviath.git --bin lev
+cargo install --git https://github.com/GEMISIS/leviath.git --bin lev
 ```
 
 ## Verifying a download
@@ -135,7 +135,7 @@ which you can check by hand — it is the stronger guarantee, signed by the buil
 workflow's identity rather than published beside the asset:
 
 ```bash
-gh attestation verify leviath-linux-x64.tar.gz --repo Sun-Forge-AI/leviath
+gh attestation verify leviath-linux-x64.tar.gz --repo GEMISIS/leviath
 ```
 
 ## Quick Start
@@ -232,7 +232,7 @@ Nine agents ship out of the box:
 
 **Auth errors during install** — No token is needed; everything is public. A 401/403
 usually means leftovers from the private alpha: remove any
-`url."https://…@github.com/Sun-Forge-AI/".insteadOf` rewrite from `~/.gitconfig` and
+`url."https://…@github.com/GEMISIS/".insteadOf` rewrite from `~/.gitconfig` and
 unset stale `GITHUB_TOKEN` / `HOMEBREW_GITHUB_API_TOKEN` exports — an expired token
 *fails* requests that would succeed anonymously.
 
@@ -243,7 +243,7 @@ unset stale `GITHUB_TOKEN` / `HOMEBREW_GITHUB_API_TOKEN` exports — an expired 
 ## Links
 
 - 📖 [Documentation](https://leviath.dev/docs)
-- 🐛 [Report an Issue](https://github.com/Sun-Forge-AI/leviath/issues)
+- 🐛 [Report an Issue](https://github.com/GEMISIS/leviath/issues)
 - 🔒 [Security Policy](SECURITY.md)
 - 🤝 [Contributing](CONTRIBUTING.md)
 - 📜 [License (MIT)](LICENSE)

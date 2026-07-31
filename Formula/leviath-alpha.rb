@@ -11,20 +11,20 @@ class LeviathAlpha < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-macos-arm64.tar.gz",
+      url "https://github.com/GEMISIS/leviath/releases/download/alpha/leviath-macos-arm64.tar.gz",
           using: VerifiedGitHubReleaseDownloadStrategy
     else
-      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-macos-x64.tar.gz",
+      url "https://github.com/GEMISIS/leviath/releases/download/alpha/leviath-macos-x64.tar.gz",
           using: VerifiedGitHubReleaseDownloadStrategy
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-linux-arm64.tar.gz",
+      url "https://github.com/GEMISIS/leviath/releases/download/alpha/leviath-linux-arm64.tar.gz",
           using: VerifiedGitHubReleaseDownloadStrategy
     else
-      url "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-linux-x64.tar.gz",
+      url "https://github.com/GEMISIS/leviath/releases/download/alpha/leviath-linux-x64.tar.gz",
           using: VerifiedGitHubReleaseDownloadStrategy
     end
   end

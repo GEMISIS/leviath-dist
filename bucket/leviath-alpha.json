@@ -5,8 +5,8 @@
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/leviath-windows-x64.zip",
-            "hash": "https://github.com/Sun-Forge-AI/leviath/releases/download/alpha/SHA256SUMS",
+            "url": "https://github.com/GEMISIS/leviath/releases/download/alpha/leviath-windows-x64.zip",
+            "hash": "https://github.com/GEMISIS/leviath/releases/download/alpha/SHA256SUMS",
             "bin": "lev.exe"
         }
     }
