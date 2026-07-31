@@ -2,33 +2,23 @@
 
 require "digest"
 require "download_strategy"
-require "json"
-require "utils/popen"
 
-# Download strategy for release assets of *private* GitHub repositories.
+# Download strategy for Leviath's GitHub release assets.
 #
-# Homebrew fetches formula URLs with plain curl, so the usual
-# `git config url.insteadOf` token trick (which only affects git) never
-# applies, and https://github.com/<owner>/<repo>/releases/download/... on a
-# private repo always returns 404 — even WITH an Authorization header.
-# Private release assets are only downloadable through the REST API asset
-# endpoint (https://api.github.com/.../releases/assets/<id>) with
-# `Accept: application/octet-stream`, which is what this strategy does.
+# The repos are public, so plain curl fetches the assets — no token, no API.
+# What this adds over Homebrew's stock CurlDownloadStrategy is verification:
+# every download is checked against the SHA256SUMS file published in the same
+# release before it is handed to Homebrew. A formula normally pins a literal
+# `sha256`, but these are rolling channel tags — `alpha` is re-uploaded on
+# every build — so a pinned hash would be wrong within a day. Verifying against
+# the checksums file published beside the asset keeps the guarantee without
+# pinning. See the caveat on `verify_checksum!` for what that does and does
+# not buy.
 #
-# Every download is verified against the release's own SHA256SUMS before it is
-# handed to Homebrew. Note that Homebrew only calls `_fetch` when it actually
-# downloads: an archive already in its cache is reused without re-running this,
-# which is the same trust boundary as the rest of the user's own cache. A formula normally pins a literal `sha256`, but these are
-# rolling channel tags — `alpha` is re-uploaded on every build — so a pinned
-# hash would be wrong within a day. Verifying against the checksums file
-# published beside the asset keeps the guarantee without pinning. See the
-# caveat on `verify_checksum!` for what that does and does not buy.
-#
-# Token lookup order:
-#   1. HOMEBREW_GITHUB_API_TOKEN (survives brew's environment filtering)
-#   2. GITHUB_TOKEN (works when brew is invoked with it in scope)
-#   3. `gh auth token` (GitHub CLI, if installed and logged in)
-class GitHubPrivateRepositoryReleaseDownloadStrategy < CurlDownloadStrategy
+# Note that Homebrew only calls `_fetch` when it actually downloads: an archive
+# already in its cache is reused without re-running this, which is the same
+# trust boundary as the rest of the user's own cache.
+class VerifiedGitHubReleaseDownloadStrategy < CurlDownloadStrategy
   # The checksums file published alongside every release asset.
   CHECKSUM_FILE = "SHA256SUMS"
 
@@ -42,63 +32,8 @@ class GitHubPrivateRepositoryReleaseDownloadStrategy < CurlDownloadStrategy
 
   private
 
-  def github_token
-    @github_token ||= begin
-      token = ENV["HOMEBREW_GITHUB_API_TOKEN"] || ENV["GITHUB_TOKEN"] || gh_cli_token
-      if token.nil? || token.empty?
-        raise CurlDownloadStrategyError, <<~EOS
-          No GitHub token available to download a private release asset.
-          Set one before installing (a PAT with `repo` scope):
-            export HOMEBREW_GITHUB_API_TOKEN=ghp_your_token_here
-          or log in with the GitHub CLI: gh auth login
-        EOS
-      end
-      token
-    end
-  end
-
-  def gh_cli_token
-    token = Utils.popen_read("gh", "auth", "token").strip
-    token.empty? ? nil : token
-  rescue StandardError
-    nil
-  end
-
-  def release
-    @release ||= begin
-      result = curl_output(
-        "--silent", "--location",
-        "--header", "Authorization: token #{github_token}",
-        "--header", "Accept: application/vnd.github+json",
-        "https://api.github.com/repos/#{@owner}/#{@repo}/releases/tags/#{@tag}"
-      )
-      unless result.success?
-        raise CurlDownloadStrategyError,
-              "Failed to fetch release metadata for #{@owner}/#{@repo} tag #{@tag}. Bad token?"
-      end
-
-      JSON.parse(result.stdout)
-    end
-  end
-
-  def asset_id(name)
-    asset = (release["assets"] || []).find { |a| a["name"] == name }
-    if asset.nil?
-      raise CurlDownloadStrategyError,
-            "Release #{@tag} has no asset named #{name}. " \
-            "Available: #{(release["assets"] || []).map { |a| a["name"] }.join(", ")}"
-    end
-
-    asset["id"]
-  end
-
-  def download_asset(name, to:, timeout: nil)
-    curl_download(
-      "https://api.github.com/repos/#{@owner}/#{@repo}/releases/assets/#{asset_id(name)}",
-      "--header", "Authorization: token #{github_token}",
-      "--header", "Accept: application/octet-stream",
-      to: to, timeout: timeout
-    )
+  def checksum_url
+    "https://github.com/#{@owner}/#{@repo}/releases/download/#{@tag}/#{CHECKSUM_FILE}"
   end
 
   # Refuse anything whose SHA-256 is not the one published beside it.
@@ -110,9 +45,9 @@ class GitHubPrivateRepositoryReleaseDownloadStrategy < CurlDownloadStrategy
   # a cache or mirror serving something else, which is the class this formula
   # could previously not detect at all.
   def verify_checksum!(path)
-    sums = Pathname.new("#{path}.SHA256SUMS")
+    sums = Pathname.new("#{path}.#{CHECKSUM_FILE}")
     begin
-      download_asset(CHECKSUM_FILE, to: sums)
+      curl_download(checksum_url, to: sums)
       expected = sums.read.each_line.find { |l| l.split(/\s+/, 2)[1].to_s.strip == @filename }
                      &.split(/\s+/, 2)&.first&.strip
     ensure
@@ -145,7 +80,7 @@ class GitHubPrivateRepositoryReleaseDownloadStrategy < CurlDownloadStrategy
   end
 
   def _fetch(url:, resolved_url:, timeout:)
-    download_asset(@filename, to: temporary_path, timeout: timeout)
+    super
     verify_checksum!(temporary_path)
   end
 end
