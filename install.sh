@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 #
 # Leviath installer for Linux and macOS
-# Usage: curl -fsSL https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash
-# Usage: curl -fsSL https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash -s -- --channel alpha
+# Usage: curl -fsSL https://raw.githubusercontent.com/GEMISIS/leviath-dist/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/GEMISIS/leviath-dist/main/install.sh | bash -s -- --channel alpha
 #
 set -euo pipefail
 
 # Defaults
 CHANNEL="alpha"
-REPO="Sun-Forge-AI/leviath"
+REPO="GEMISIS/leviath"
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="lev"
 

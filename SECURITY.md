@@ -3,15 +3,15 @@
 This repo distributes Leviath — the Homebrew tap, Scoop bucket, and install
 scripts. The runtime itself, its threat model, and the full security policy live
 in the main repo:
-[Sun-Forge-AI/leviath/SECURITY.md](https://github.com/Sun-Forge-AI/leviath/blob/main/SECURITY.md).
+[GEMISIS/leviath/SECURITY.md](https://github.com/GEMISIS/leviath/blob/main/SECURITY.md).
 
 ## Reporting a vulnerability
 
 Please report vulnerabilities in the installers, formulae, or manifests privately
 via GitHub's
-[private vulnerability reporting](https://github.com/Sun-Forge-AI/leviath-dist/security/advisories/new)
+[private vulnerability reporting](https://github.com/GEMISIS/leviath-dist/security/advisories/new)
 — never in a public issue. Reports about the `lev` runtime itself go to the
-[main repo's advisory form](https://github.com/Sun-Forge-AI/leviath/security/advisories/new).
+[main repo's advisory form](https://github.com/GEMISIS/leviath/security/advisories/new).
 
 ## What the installers guarantee
 
@@ -23,5 +23,5 @@ defend against an attacker who can rewrite a whole release — for that, release
 carry GitHub build-provenance attestations you can verify manually:
 
 ```bash
-gh attestation verify leviath-linux-x64.tar.gz --repo Sun-Forge-AI/leviath
+gh attestation verify leviath-linux-x64.tar.gz --repo GEMISIS/leviath
 ```

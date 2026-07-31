@@ -1,7 +1,7 @@
 # Leviath installer for Windows
 #
 # Usage (PowerShell):
-#   irm https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/GEMISIS/leviath-dist/main/install.ps1 | iex
 #
 # Or download this file and run:
 #   .\install.ps1 -Channel alpha    # alpha (default) | beta | stable
@@ -13,7 +13,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$Repo = "Sun-Forge-AI/leviath"
+$Repo = "GEMISIS/leviath"
 $AssetName = "leviath-windows-x64.zip"
 $InstallDir = Join-Path $env:LOCALAPPDATA "Leviath\bin"
 

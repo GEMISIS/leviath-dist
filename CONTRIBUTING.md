@@ -3,8 +3,8 @@
 This repo holds Leviath's install paths: Homebrew formulae (`Formula/`), the
 shared download strategy (`lib/`), Scoop manifests (`bucket/`), and the install
 scripts (`install.sh`, `install.ps1`). Changes to the runtime itself belong in
-[Sun-Forge-AI/leviath](https://github.com/Sun-Forge-AI/leviath) — see its
-[CONTRIBUTING.md](https://github.com/Sun-Forge-AI/leviath/blob/main/CONTRIBUTING.md)
+[GEMISIS/leviath](https://github.com/GEMISIS/leviath) — see its
+[CONTRIBUTING.md](https://github.com/GEMISIS/leviath/blob/main/CONTRIBUTING.md)
 for the broader process, which applies here too.
 
 The short version:
@@ -18,5 +18,5 @@ The short version:
   handling) gets extra scrutiny — please describe how you tested it against a
   real release, not just that CI is green.
 - Security issues go through
-  [private vulnerability reporting](https://github.com/Sun-Forge-AI/leviath-dist/security/advisories/new),
+  [private vulnerability reporting](https://github.com/GEMISIS/leviath-dist/security/advisories/new),
   never public issues.
