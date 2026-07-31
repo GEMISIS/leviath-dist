@@ -61,6 +61,9 @@ flowchart LR
 # Add the tap (one time)
 brew tap sun-forge-ai/leviath https://github.com/Sun-Forge-AI/leviath-dist.git
 
+# Homebrew 6 requires explicitly trusting third-party taps (one time)
+brew trust sun-forge-ai/leviath
+
 # Install your channel of choice
 brew install leviath         # stable - or: leviath-beta, leviath-alpha
 ```
