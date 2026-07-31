@@ -1,8 +1,7 @@
 # Leviath installer for Windows
 #
 # Usage (PowerShell):
-#   $env:GITHUB_TOKEN = "ghp_your_token_here"   # PAT with `repo` scope (private phase)
-#   irm -Headers @{Authorization="token $env:GITHUB_TOKEN"} https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.ps1 | iex
 #
 # Or download this file and run:
 #   .\install.ps1 -Channel alpha    # alpha (default) | beta | stable

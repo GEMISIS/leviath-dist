@@ -119,7 +119,7 @@ RELEASE_URL="https://api.github.com/repos/${REPO}/releases/tags/${RELEASE_TAG}"
 if [ ${#AUTH_OPTS[@]} -gt 0 ]; then
     RELEASE_JSON="$(curl "${CURL_OPTS[@]}" "${AUTH_OPTS[@]}" "$RELEASE_URL" 2>/dev/null)" || err "Failed to fetch release info. Is GITHUB_TOKEN set and valid?"
 else
-    RELEASE_JSON="$(curl "${CURL_OPTS[@]}" "$RELEASE_URL" 2>/dev/null)" || err "Failed to fetch release info. For private repos, set GITHUB_TOKEN."
+    RELEASE_JSON="$(curl "${CURL_OPTS[@]}" "$RELEASE_URL" 2>/dev/null)" || err "Failed to fetch release info. Check your network, or https://github.com/${REPO}/releases for the channel's status."
 fi
 
 TAG="$(echo "$RELEASE_JSON" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"//;s/".*//')"
@@ -165,10 +165,12 @@ CHECKSUM_URL="$(asset_url "$CHECKSUM_NAME")"
 require_github_https "$CHECKSUM_URL"
 
 info "Downloading ${ASSET_NAME}..."
-curl "${CURL_OPTS[@]}" "${AUTH_OPTS[@]}" -H "Accept: application/octet-stream" -o "${TMPDIR}/${ASSET_NAME}" "$DOWNLOAD_URL"
+# ${arr[@]+...} keeps `set -u` on macOS's bash 3.2 from treating an *empty*
+# array (the tokenless case) as an unbound variable.
+curl "${CURL_OPTS[@]}" ${AUTH_OPTS[@]+"${AUTH_OPTS[@]}"} -H "Accept: application/octet-stream" -o "${TMPDIR}/${ASSET_NAME}" "$DOWNLOAD_URL"
 
 info "Downloading ${CHECKSUM_NAME}..."
-curl "${CURL_OPTS[@]}" "${AUTH_OPTS[@]}" -H "Accept: application/octet-stream" -o "${TMPDIR}/${CHECKSUM_NAME}" "$CHECKSUM_URL"
+curl "${CURL_OPTS[@]}" ${AUTH_OPTS[@]+"${AUTH_OPTS[@]}"} -H "Accept: application/octet-stream" -o "${TMPDIR}/${CHECKSUM_NAME}" "$CHECKSUM_URL"
 
 # Verify before unpacking, and refuse to continue on any doubt.
 #
