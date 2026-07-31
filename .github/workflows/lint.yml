@@ -14,7 +14,7 @@ jobs:
     name: install.sh syntax
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: bash -n + shellcheck
         run: |
           bash -n install.sh
@@ -24,7 +24,7 @@ jobs:
     name: install.ps1 syntax
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Parse install.ps1
         shell: pwsh
         run: |
@@ -37,7 +37,7 @@ jobs:
     name: Formula syntax
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: ruby -c on formulas and strategy
         run: |
           for f in Formula/*.rb lib/*.rb; do ruby -c "$f"; done
