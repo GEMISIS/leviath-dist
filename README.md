@@ -14,7 +14,7 @@
 </div>
 
 <p align="center">
-  <a href="https://github.com/Sun-Forge-AI/leviath/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
   <a href="https://leviath.dev"><img src="https://img.shields.io/badge/docs-leviath.dev-8b5cf6" alt="Docs"></a>
 </p>
 
@@ -24,52 +24,11 @@ Most agent tools give LLMs a flat message array and hope for the best. Leviath g
 
 Pick a pre-built agent or create your own. Run it. Watch it actually remember what it read 50 tool calls ago.
 
-## ⚠️ Private Alpha — Setup Required
-
-This repo and its releases are **private**. Before installing, you'll need a GitHub Personal Access Token (PAT) with `repo` scope:
-
-1. Go to [github.com/settings/tokens](https://github.com/settings/tokens) → **Generate new token (classic)**
-2. Select the **`repo`** scope (full control of private repositories)
-3. Generate and copy the token
-
-Then configure git to authenticate with private Sun-Forge-AI repos:
-
-**macOS / Linux:**
-
-```bash
-# Replace ghp_your_token_here with your actual PAT
-
-# Lets git clone the private tap/bucket (used by `brew tap` / `scoop bucket add`)
-git config --global url."https://ghp_your_token_here@github.com/Sun-Forge-AI/".insteadOf "https://github.com/Sun-Forge-AI/"
-
-# Lets Homebrew download the private release binaries (git config does NOT
-# cover this -- brew fetches assets with curl via the GitHub API):
-export HOMEBREW_GITHUB_API_TOKEN="ghp_your_token_here"  # add to ~/.zshrc or ~/.bashrc
-
-# For the Linux install script, also export the token:
-export GITHUB_TOKEN="ghp_your_token_here"  # add to ~/.zshrc or ~/.bashrc
-```
-
-> Already using the [GitHub CLI](https://cli.github.com)? You can skip the exports —
-> the formulas fall back to `gh auth token` automatically.
-
-**Windows:**
-
-```powershell
-# Replace ghp_your_token_here with your actual PAT
-git config --global url."https://ghp_your_token_here@github.com/Sun-Forge-AI/".insteadOf "https://github.com/Sun-Forge-AI/"
-
-# For the install script:
-$env:GITHUB_TOKEN = "ghp_your_token_here"  # add to $PROFILE for persistence
-```
-
-The git config covers `brew tap` and `scoop bucket add` (git clones). The exported tokens cover the actual binary downloads, which go through the GitHub API — private release assets return 404 for plain URL fetches, even authenticated ones.
-
-> **Note:** You also need to be added as a collaborator on this repo. If you can read this, you're good.
+This repo is the **distribution channel**: the Homebrew tap, the Scoop bucket, and the install scripts. The runtime itself lives in [Sun-Forge-AI/leviath](https://github.com/Sun-Forge-AI/leviath). No account or token is needed to install — everything is public.
 
 ## Release Channels
 
-Leviath has three release channels:
+Leviath has three release channels, each a rolling release tag on the main repo:
 
 | Channel | Schedule | Stability | Install command |
 |---------|----------|-----------|-----------------|
@@ -77,43 +36,48 @@ Leviath has three release channels:
 | **Beta** | Weekly (Monday) | 🟡 Tested | `brew install leviath-beta` |
 | **Stable** | Weekly (Thursday, approved) | ✅ Production | `brew install leviath` |
 
+Every install path resolves a channel to its release tag and verifies the download against the `SHA256SUMS` published in the same release before anything is unpacked:
+
+```mermaid
+flowchart LR
+    BREW["Homebrew tap<br/>(Formula/*.rb)"] --> TAGS
+    SCOOP["Scoop bucket<br/>(bucket/*.json)"] --> TAGS
+    SH["install.sh<br/>(Linux / macOS)"] --> TAGS
+    PS["install.ps1<br/>(Windows)"] --> TAGS
+    subgraph TAGS["Release tags on Sun-Forge-AI/leviath"]
+        A["alpha"]
+        B["beta"]
+        S["latest (stable)"]
+    end
+    TAGS --> V["Verify against<br/>SHA256SUMS"]
+    V --> BIN["lev on your PATH"]
+```
+
 ## Installation
 
-### macOS (Homebrew)
+### macOS / Linux (Homebrew)
 
 ```bash
 # Add the tap (one time)
 brew tap sun-forge-ai/leviath https://github.com/Sun-Forge-AI/leviath-dist.git
 
-# Newer Homebrew requires explicitly trusting third-party taps (one time)
-brew trust sun-forge-ai/leviath
-
 # Install your channel of choice
-brew install leviath-alpha   # or: leviath-beta, leviath (stable)
+brew install leviath         # stable - or: leviath-beta, leviath-alpha
 ```
 
 To update:
 
 ```bash
-brew update && brew upgrade leviath-alpha
+brew update && brew upgrade leviath
 ```
 
-> **Note:** Only one channel can be installed at a time. Switch channels with `brew uninstall leviath-alpha && brew install leviath-beta`.
+> **Note:** Only one channel can be installed at a time. Switch channels with `brew uninstall leviath && brew install leviath-beta`.
 
-### Linux
-
-**Quick install** (alpha channel, x86_64/arm64). While the repo is private, the
-raw URL itself needs your token too:
+### Linux (install script)
 
 ```bash
-curl -fsSL -H "Authorization: token $GITHUB_TOKEN" https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash
-```
-
-To install a specific channel:
-
-```bash
-curl -fsSL -H "Authorization: token $GITHUB_TOKEN" https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash -s -- --channel beta
-# Channels: alpha (default), beta, stable
+curl -fsSL https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.sh | bash -s -- --channel stable
+# Channels: alpha (default when omitted), beta, stable
 ```
 
 **Manual install:**
@@ -128,24 +92,22 @@ sudo mv lev /usr/local/bin/
 
 ### Windows
 
-**Install script** (recommended while the repo is private — Scoop cannot
-download private release assets):
+**Scoop** (recommended):
 
 ```powershell
-$env:GITHUB_TOKEN = "ghp_your_token_here"   # PAT with repo scope
-irm -Headers @{Authorization="token $env:GITHUB_TOKEN"} https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.ps1 | iex
+scoop bucket add leviath https://github.com/Sun-Forge-AI/leviath-dist.git
+scoop install leviath        # stable - or: leviath-beta, leviath-alpha
+```
+
+**Install script:**
+
+```powershell
+irm https://raw.githubusercontent.com/Sun-Forge-AI/leviath-dist/main/install.ps1 | iex
 ```
 
 This installs `lev.exe` to `%LOCALAPPDATA%\Leviath\bin` and adds it to your
 user `PATH`. Re-run the same command to update. To pick a channel, download
 the script and run `.\install.ps1 -Channel beta` (or `stable`).
-
-**Scoop** (available once the repo goes public):
-
-```powershell
-scoop bucket add leviath https://github.com/Sun-Forge-AI/leviath-dist.git
-scoop install leviath-alpha
-```
 
 **Manual install:**
 
@@ -159,6 +121,18 @@ Requires [Rust](https://rustup.rs/) (stable toolchain):
 
 ```bash
 cargo install --git https://github.com/Sun-Forge-AI/leviath.git --bin lev
+```
+
+## Verifying a download
+
+The Homebrew formulae, the Scoop manifests, and both install scripts verify every
+download against the release's `SHA256SUMS` automatically and refuse to install on
+any mismatch. Releases are additionally attested with GitHub build provenance,
+which you can check by hand — it is the stronger guarantee, signed by the build
+workflow's identity rather than published beside the asset:
+
+```bash
+gh attestation verify leviath-linux-x64.tar.gz --repo Sun-Forge-AI/leviath
 ```
 
 ## Quick Start
@@ -253,6 +227,12 @@ Nine agents ship out of the box:
 - Linux: The install script puts it in `/usr/local/bin`. If you installed manually, ensure the binary location is in your `$PATH`
 - Windows: Add the folder containing `lev.exe` to your system PATH ([guide](https://www.architectryan.com/2018/03/17/add-to-the-path-on-windows-10/))
 
+**Auth errors during install** — No token is needed; everything is public. A 401/403
+usually means leftovers from the private alpha: remove any
+`url."https://…@github.com/Sun-Forge-AI/".insteadOf` rewrite from `~/.gitconfig` and
+unset stale `GITHUB_TOKEN` / `HOMEBREW_GITHUB_API_TOKEN` exports — an expired token
+*fails* requests that would succeed anonymously.
+
 **Provider connection errors** — Run `lev setup` to verify your API key is configured correctly. For Ollama, make sure the server is running (`ollama serve`).
 
 **Permission denied (Linux)** — Make sure the binary is executable: `chmod +x /usr/local/bin/lev`
@@ -261,4 +241,6 @@ Nine agents ship out of the box:
 
 - 📖 [Documentation](https://leviath.dev/docs)
 - 🐛 [Report an Issue](https://github.com/Sun-Forge-AI/leviath/issues)
-- 📜 [License (MIT)](https://github.com/Sun-Forge-AI/leviath/blob/main/LICENSE)
+- 🔒 [Security Policy](SECURITY.md)
+- 🤝 [Contributing](CONTRIBUTING.md)
+- 📜 [License (MIT)](LICENSE)
