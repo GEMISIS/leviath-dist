@@ -219,7 +219,17 @@ jobs:
             url=$(gh pr view "$existing" --json url --jq .url)
             echo "Updated existing PR: $url"
           else
-            url=$(gh pr create --base "$GITHUB_REF_NAME" --head "$BRANCH" --title "$title" --body "$body")
+            if ! url=$(gh pr create --base "$GITHUB_REF_NAME" --head "$BRANCH" --title "$title" --body "$body" 2>&1); then
+              # The commits are already on the branch and verified; only the PR
+              # is missing, so say exactly what unblocks it rather than leaving
+              # a GraphQL string behind.
+              if printf '%s' "$url" | grep -q 'not permitted to create'; then
+                echo "::error::Commits are on $BRANCH but Actions cannot open the PR. Enable Settings -> Actions -> General -> 'Allow GitHub Actions to create and approve pull requests', then re-run. Until then, open a PR from $BRANCH by hand."
+              else
+                echo "::error::could not open a PR from $BRANCH: $url"
+              fi
+              exit 1
+            fi
             echo "Opened PR: $url"
           fi
 
