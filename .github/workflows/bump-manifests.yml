@@ -18,6 +18,16 @@ name: Bump manifests
 # The caller sends the exact string to write rather than having this workflow
 # derive it, so each channel keeps ownership of its own versioning scheme
 # (alpha, for instance, needs a per-build suffix to stay monotonic).
+#
+# It opens a PR rather than pushing: the "Main Branch Protections" ruleset
+# requires changes to arrive by pull request, with its checks passing and with
+# verified signatures. Commits are therefore written through the Contents API,
+# which GitHub signs, and one long-lived branch per channel is reused so a
+# nightly alpha updates its existing PR instead of opening a new one every day.
+#
+# Repo setting worth having: with "Allow auto-merge" enabled, the final step
+# lands each bump automatically once Lint passes. Without it the PR simply
+# waits for a human, and the tap stays correct either way — just not unattended.
 
 on:
   repository_dispatch:
@@ -37,10 +47,11 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   # Serialize per channel: two releases landing together must not race on the
-  # same files, but stable must not have to wait behind alpha either.
+  # same branch, but stable must not have to wait behind alpha either.
   group: bump-${{ github.event.client_payload.channel || inputs.channel }}
   cancel-in-progress: false
 
@@ -85,12 +96,15 @@ jobs:
           done
 
           {
+            echo "channel=$CHANNEL"
             echo "formula=$formula"
             echo "manifest=$manifest"
             echo "version=$VERSION"
+            echo "branch=tap-bump/$CHANNEL"
           } >> "$GITHUB_OUTPUT"
 
       - name: Write the version
+        id: write
         env:
           FORMULA: ${{ steps.resolve.outputs.formula }}
           MANIFEST: ${{ steps.resolve.outputs.manifest }}
@@ -128,40 +142,91 @@ jobs:
           manifest.write_text(json.dumps(data, indent=4) + "\n")
           PY
 
-          echo "--- $FORMULA ---"
-          grep -n '^\s*version' "$FORMULA"
-          echo "--- $MANIFEST ---"
-          grep -n '"version"' "$MANIFEST"
+          if git diff --quiet; then
+            echo "Already at $VERSION — nothing to do."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git --no-pager diff --stat
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Verify the files still parse
+        if: steps.write.outputs.changed == 'true'
         run: |
           set -euo pipefail
           for f in Formula/*.rb lib/*.rb; do ruby -c "$f"; done
           for f in bucket/*.json; do python3 -m json.tool "$f" > /dev/null; done
 
-      - name: Commit
+      # Written through the Contents API rather than `git push`: main requires
+      # verified signatures, and GitHub signs commits it creates itself.
+      - name: Commit to the channel branch
+        if: steps.write.outputs.changed == 'true'
         env:
-          CHANNEL: ${{ github.event.client_payload.channel || inputs.channel }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ steps.resolve.outputs.branch }}
+          FORMULA: ${{ steps.resolve.outputs.formula }}
+          MANIFEST: ${{ steps.resolve.outputs.manifest }}
           VERSION: ${{ steps.resolve.outputs.version }}
+          CHANNEL: ${{ steps.resolve.outputs.channel }}
         run: |
           set -euo pipefail
 
-          if git diff --quiet; then
-            echo "Already at $VERSION — nothing to commit."
-            exit 0
+          base_sha=$(gh api "repos/$REPO/git/ref/heads/${GITHUB_REF_NAME}" --jq .object.sha)
+
+          # Reset the channel branch onto main. Any unmerged bump sitting there
+          # is for an older release of this same channel, so it is superseded
+          # rather than something to preserve.
+          if gh api "repos/$REPO/git/ref/heads/$BRANCH" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$REPO/git/refs/heads/$BRANCH" \
+              -f sha="$base_sha" -F force=true >/dev/null
+          else
+            gh api -X POST "repos/$REPO/git/refs" \
+              -f ref="refs/heads/$BRANCH" -f sha="$base_sha" >/dev/null
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "chore: bump $CHANNEL manifests to $VERSION"
-
-          # A concurrent bump for another channel may have landed since checkout.
-          for attempt in 1 2 3; do
-            if git push; then
-              exit 0
-            fi
-            echo "push rejected (attempt $attempt), rebasing on origin/main"
-            git pull --rebase origin main
+          for path in "$FORMULA" "$MANIFEST"; do
+            current=$(gh api "repos/$REPO/contents/$path?ref=$BRANCH" --jq .sha)
+            gh api -X PUT "repos/$REPO/contents/$path" \
+              -f message="chore: bump $CHANNEL $(basename "$path") to $VERSION" \
+              -f content="$(base64 -w0 < "$path")" \
+              -f sha="$current" \
+              -f branch="$BRANCH" >/dev/null
+            echo "committed $path"
           done
-          echo "::error::could not push after 3 attempts"
-          exit 1
+
+      - name: Open or update the pull request
+        if: steps.write.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.resolve.outputs.branch }}
+          VERSION: ${{ steps.resolve.outputs.version }}
+          CHANNEL: ${{ steps.resolve.outputs.channel }}
+        run: |
+          set -euo pipefail
+
+          title="chore: bump $CHANNEL manifests to $VERSION"
+          body="Automated: the $CHANNEL channel published \`$VERSION\`.
+
+          Homebrew and Scoop compare the installed version against the version
+          declared here to decide whether an upgrade exists — they never look at
+          what is behind the rolling channel tag these manifests point at. Until
+          this lands, \`brew upgrade\` stays a no-op for $CHANNEL users."
+
+          existing=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --title "$title" --body "$body"
+            url=$(gh pr view "$existing" --json url --jq .url)
+            echo "Updated existing PR: $url"
+          else
+            url=$(gh pr create --base "$GITHUB_REF_NAME" --head "$BRANCH" --title "$title" --body "$body")
+            echo "Opened PR: $url"
+          fi
+
+          # Lands it once Lint passes, if the repo allows auto-merge. Nothing
+          # breaks when it does not — the PR just waits for a human.
+          if ! gh pr merge "$url" --auto --squash 2>/dev/null; then
+            echo "::notice::Auto-merge is off for this repo, so $url needs a manual merge. Enable it in Settings → General → Pull Requests to land these unattended."
+          fi
+
+          echo "$url" >> "$GITHUB_STEP_SUMMARY"
