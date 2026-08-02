@@ -1,0 +1,167 @@
+name: Bump manifests
+
+# Keeps the tap's declared versions in step with what the release pipeline just
+# published. This is not cosmetic: Homebrew and Scoop decide "is an upgrade
+# available" by comparing the installed version against the version *declared*
+# in the manifest — neither ever looks at what is behind the download URL. The
+# URLs here are rolling channel tags, so a stale `version` string means
+# `brew upgrade` is a no-op forever and existing users stay pinned to whatever
+# they first installed, even though the tag has moved on.
+#
+# Fired by leviath's alpha/beta/prod workflows once a release is published:
+#
+#   gh api repos/GEMISIS/leviath-dist/dispatches \
+#     -f event_type=release-published \
+#     -F client_payload[channel]=stable \
+#     -F client_payload[version]=0.1.1
+#
+# The caller sends the exact string to write rather than having this workflow
+# derive it, so each channel keeps ownership of its own versioning scheme
+# (alpha, for instance, needs a per-build suffix to stay monotonic).
+
+on:
+  repository_dispatch:
+    types: [release-published]
+  # Manual escape hatch: re-sync a channel by hand without cutting a release.
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Channel whose manifests should be updated
+        required: true
+        type: choice
+        options: [stable, beta, alpha]
+      version:
+        description: Exact version string to write (e.g. 0.1.1, 0.1.1-beta)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  # Serialize per channel: two releases landing together must not race on the
+  # same files, but stable must not have to wait behind alpha either.
+  group: bump-${{ github.event.client_payload.channel || inputs.channel }}
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: Bump ${{ github.event.client_payload.channel || inputs.channel }} manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Resolve channel and version
+        id: resolve
+        env:
+          CHANNEL: ${{ github.event.client_payload.channel || inputs.channel }}
+          VERSION: ${{ github.event.client_payload.version || inputs.version }}
+        run: |
+          set -euo pipefail
+
+          case "$CHANNEL" in
+            stable) formula=Formula/leviath.rb;       manifest=bucket/leviath.json ;;
+            beta)   formula=Formula/leviath-beta.rb;  manifest=bucket/leviath-beta.json ;;
+            alpha)  formula=Formula/leviath-alpha.rb; manifest=bucket/leviath-alpha.json ;;
+            *)
+              echo "::error::unknown channel '$CHANNEL' (expected stable, beta, or alpha)"
+              exit 1
+              ;;
+          esac
+
+          # Anything that lands in a formula gets executed by Homebrew as Ruby
+          # and by Scoop as JSON, so refuse a payload that is not a plain
+          # version string before it reaches the file.
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "::error::'$VERSION' is not a valid version string"
+            exit 1
+          fi
+
+          for f in "$formula" "$manifest"; do
+            if [ ! -f "$f" ]; then
+              echo "::error::expected $f to exist"
+              exit 1
+            fi
+          done
+
+          {
+            echo "formula=$formula"
+            echo "manifest=$manifest"
+            echo "version=$VERSION"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Write the version
+        env:
+          FORMULA: ${{ steps.resolve.outputs.formula }}
+          MANIFEST: ${{ steps.resolve.outputs.manifest }}
+          VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          python3 - "$FORMULA" "$MANIFEST" "$VERSION" <<'PY'
+          import json
+          import pathlib
+          import re
+          import sys
+
+          formula_path, manifest_path, version = sys.argv[1], sys.argv[2], sys.argv[3]
+
+          formula = pathlib.Path(formula_path)
+          text = formula.read_text()
+          updated, count = re.subn(
+              r'^(\s*version\s+)"[^"]*"',
+              lambda m: f'{m.group(1)}"{version}"',
+              text,
+              count=1,
+              flags=re.MULTILINE,
+          )
+          if count != 1:
+              sys.exit(f"{formula_path}: expected exactly one version line, found {count}")
+          formula.write_text(updated)
+
+          manifest = pathlib.Path(manifest_path)
+          data = json.loads(manifest.read_text())
+          if "version" not in data:
+              sys.exit(f"{manifest_path}: no version field")
+          data["version"] = version
+          # Scoop manifests are hand-edited too; keep the existing formatting.
+          manifest.write_text(json.dumps(data, indent=4) + "\n")
+          PY
+
+          echo "--- $FORMULA ---"
+          grep -n '^\s*version' "$FORMULA"
+          echo "--- $MANIFEST ---"
+          grep -n '"version"' "$MANIFEST"
+
+      - name: Verify the files still parse
+        run: |
+          set -euo pipefail
+          for f in Formula/*.rb lib/*.rb; do ruby -c "$f"; done
+          for f in bucket/*.json; do python3 -m json.tool "$f" > /dev/null; done
+
+      - name: Commit
+        env:
+          CHANNEL: ${{ github.event.client_payload.channel || inputs.channel }}
+          VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet; then
+            echo "Already at $VERSION — nothing to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: bump $CHANNEL manifests to $VERSION"
+
+          # A concurrent bump for another channel may have landed since checkout.
+          for attempt in 1 2 3; do
+            if git push; then
+              exit 0
+            fi
+            echo "push rejected (attempt $attempt), rebasing on origin/main"
+            git pull --rebase origin main
+          done
+          echo "::error::could not push after 3 attempts"
+          exit 1
