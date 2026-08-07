@@ -11,6 +11,8 @@ CHANNEL="alpha"
 REPO="GEMISIS/leviath"
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="lev"
+# Which Linux archive to fetch: "gnu", "musl", or "auto" to look and decide.
+LIBC="auto"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -21,6 +23,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --channel=*)
       CHANNEL="${1#*=}"
+      shift
+      ;;
+    --libc)
+      LIBC="$2"
+      shift 2
+      ;;
+    --libc=*)
+      LIBC="${1#*=}"
       shift
       ;;
     *)
@@ -34,6 +44,11 @@ done
 case "$CHANNEL" in
   alpha|beta|stable) ;;
   *) echo "error: invalid channel '$CHANNEL'. Use: alpha, beta, or stable"; exit 1 ;;
+esac
+
+case "$LIBC" in
+  auto|gnu|musl) ;;
+  *) echo "error: invalid libc '$LIBC'. Use: auto, gnu, or musl"; exit 1 ;;
 esac
 
 # Colors
@@ -64,11 +79,66 @@ case "$ARCH" in
     *)               err "Unsupported architecture: $ARCH" ;;
 esac
 
-ASSET_NAME="leviath-${PLATFORM}-${ARCH_SUFFIX}.tar.gz"
+# The oldest glibc the dynamically linked Linux archives will run against.
+# They are built on the release runner and link its C library, so this tracks
+# whatever that image ships - Ubuntu 24.04 at the time of writing.
+MIN_GLIBC_MAJOR=2
+MIN_GLIBC_MINOR=38
+
+# Whether this Linux host needs the statically linked archive.
+#
+# The glibc builds fail at exec on anything older than the runner's own libc,
+# with `version 'GLIBC_2.38' not found` and nothing else - a message that has
+# nothing to do with Leviath and sends people looking in the wrong place. The
+# musl builds are static and need nothing from the host, so this looks first.
+#
+# Every uncertain answer resolves to musl, because the two are not symmetric: a
+# static binary runs anywhere the dynamic one would have, and the reverse is
+# false. The cost of guessing musl is that name resolution goes through musl's
+# resolver rather than the system's NSS stack, which matters only on hosts
+# wired to LDAP or mDNS for hostnames - and those hosts have a current glibc,
+# so they never reach this branch.
+needs_musl() {
+    # No ldd at all, or musl's own ldd: static is the only thing that runs.
+    command -v ldd >/dev/null 2>&1 || return 0
+    local first
+    first="$(ldd --version 2>&1 | head -n 1)" || true
+    case "$first" in *musl*) return 0 ;; esac
+
+    # `ldd (Ubuntu GLIBC 2.31-0ubuntu9.9) 2.31` - the version is the last field.
+    local ver major minor
+    ver="$(printf '%s' "$first" | tr ' ' '\n' | tail -n 1)"
+    major="${ver%%.*}"
+    minor="${ver#*.}"
+    minor="${minor%%.*}"
+    case "${major}${minor}" in ''|*[!0-9]*) return 0 ;; esac
+
+    if [ "$major" -gt "$MIN_GLIBC_MAJOR" ]; then return 1; fi
+    if [ "$major" -eq "$MIN_GLIBC_MAJOR" ] && [ "$minor" -ge "$MIN_GLIBC_MINOR" ]; then
+        return 1
+    fi
+    return 0
+}
+
+LIBC_SUFFIX=""
+if [ "$PLATFORM" = "linux" ]; then
+    case "$LIBC" in
+        musl) LIBC_SUFFIX="-musl" ;;
+        gnu)  LIBC_SUFFIX="" ;;
+        auto)
+            if needs_musl; then
+                LIBC_SUFFIX="-musl"
+                info "This host's C library is older than glibc ${MIN_GLIBC_MAJOR}.${MIN_GLIBC_MINOR} (or is musl), so the static build is being installed. Override with --libc gnu."
+            fi
+            ;;
+    esac
+fi
+
+ASSET_NAME="leviath-${PLATFORM}-${ARCH_SUFFIX}${LIBC_SUFFIX}.tar.gz"
 CHECKSUM_NAME="SHA256SUMS"
 
 info "Channel: ${CHANNEL}"
-info "Detected platform: ${PLATFORM}-${ARCH_SUFFIX}"
+info "Detected platform: ${PLATFORM}-${ARCH_SUFFIX}${LIBC_SUFFIX}"
 
 # Check for required tools
 for cmd in curl tar; do

@@ -83,13 +83,39 @@ curl -fsSL https://raw.githubusercontent.com/GEMISIS/leviath-dist/main/install.s
 # Channels: alpha (default when omitted), beta, stable
 ```
 
+#### glibc or musl
+
+Linux ships two builds per architecture, and the script picks for you.
+
+The default archives link the release runner's C library and need **glibc 2.38 or newer** - Ubuntu
+24.04 and up. On anything older they fail at exec with `version 'GLIBC_2.38' not found` and never
+reach a line of Leviath, which is a confusing way to find out. So the script reads `ldd --version`
+first and installs the statically linked **musl** archive instead when the host's glibc is too old
+or is musl to begin with. Containers and older CI images get a binary that just runs.
+
+Force either one:
+
+```bash
+... | bash -s -- --libc musl   # always static
+... | bash -s -- --libc gnu    # always dynamic
+```
+
+Every uncertain reading resolves to musl, because the two are not symmetric: a static binary runs
+anywhere the dynamic one would have, and the reverse is false. The one thing musl costs is name
+resolution through musl's own resolver rather than the system NSS stack, which matters only on
+hosts wired to LDAP or mDNS for hostnames - and those have a current glibc, so they never take
+this branch.
+
+Homebrew on Linux keeps using the glibc builds. Homebrew has its own minimum glibc well above
+this one, so a host that can run `brew` can run them.
+
 **Manual install:**
 
 1. Download the latest release from [GitHub Releases](https://github.com/GEMISIS/leviath/releases)
 2. Extract and move to your PATH:
 
 ```bash
-tar xzf leviath-linux-x64.tar.gz
+tar xzf leviath-linux-x64.tar.gz        # or leviath-linux-x64-musl.tar.gz
 sudo mv lev /usr/local/bin/
 ```
 
