@@ -25,6 +25,36 @@ name: Bump manifests
 # which GitHub signs, and one long-lived branch per channel is reused so a
 # nightly alpha updates its existing PR instead of opening a new one every day.
 #
+# ── Why two credentials ──────────────────────────────────────────────────────
+#
+# The commit and the pull request are made by different identities, and the
+# split is the whole reason this lands unattended.
+#
+#   commit  →  github.token       its Contents API commits are *signed*, which
+#                                 `required_signatures` insists on. A token of
+#                                 any other kind produces unsigned commits that
+#                                 the ruleset then refuses.
+#   the PR  →  secrets.TAP_PR_TOKEN
+#                                 a pull request opened by GITHUB_TOKEN does not
+#                                 start the `Lint` workflow it needs to pass:
+#                                 the run arrives `action_required` and waits for
+#                                 a person. The required checks therefore never
+#                                 report and auto-merge never fires, so the tap
+#                                 sat a version behind until somebody noticed.
+#                                 A PR opened by a real identity fires the event
+#                                 normally and Lint runs on its own.
+#
+# TAP_PR_TOKEN is a fine-grained PAT scoped to this repository with
+# `Pull requests: read and write` and nothing else. It cannot push code and it
+# cannot bypass a rule - the merge is still gated on the three Lint checks and
+# on the commits being signed. It only makes the event fire.
+#
+# A ruleset bypass was the other option and is worse: a bypass skips the *whole*
+# ruleset, `required_signatures` included, so the bump commits would land on
+# main unsigned. (It is also unavailable here - GitHub refuses an Actions
+# integration bypass on a user-owned repository: "Actor GitHub Actions
+# integration must be part of the ruleset source or owner organization".)
+#
 # Repo setting worth having: with "Allow auto-merge" enabled, the final step
 # lands each bump automatically once Lint passes. Without it the PR simply
 # waits for a human, and the tap stays correct either way — just not unattended.
@@ -195,15 +225,26 @@ jobs:
             echo "committed $path"
           done
 
+      # `TAP_PR_TOKEN`, not `github.token`: see the note at the top. A PR opened
+      # by GITHUB_TOKEN does not start the Lint run it has to pass, so it waits
+      # for a person forever. Falling back to `github.token` when the secret is
+      # absent keeps the tap correct on a repo that has not set it up - the PR
+      # is still opened and still carries the right manifests, it just needs a
+      # human to approve its checks, which is where this started.
       - name: Open or update the pull request
         if: steps.write.outputs.changed == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.TAP_PR_TOKEN || github.token }}
+          HAVE_PR_TOKEN: ${{ secrets.TAP_PR_TOKEN != '' }}
           BRANCH: ${{ steps.resolve.outputs.branch }}
           VERSION: ${{ steps.resolve.outputs.version }}
           CHANNEL: ${{ steps.resolve.outputs.channel }}
         run: |
           set -euo pipefail
+
+          if [ "$HAVE_PR_TOKEN" != "true" ]; then
+            echo "::warning::TAP_PR_TOKEN is not set, so this PR is opened by GITHUB_TOKEN and its Lint run will wait for manual approval before it can merge. Add a fine-grained PAT with 'Pull requests: read and write' as TAP_PR_TOKEN to land these unattended."
+          fi
 
           title="chore: bump $CHANNEL manifests to $VERSION"
           body="Automated: the $CHANNEL channel published \`$VERSION\`.
@@ -224,7 +265,7 @@ jobs:
               # is missing, so say exactly what unblocks it rather than leaving
               # a GraphQL string behind.
               if printf '%s' "$url" | grep -q 'not permitted to create'; then
-                echo "::error::Commits are on $BRANCH but Actions cannot open the PR. Enable Settings -> Actions -> General -> 'Allow GitHub Actions to create and approve pull requests', then re-run. Until then, open a PR from $BRANCH by hand."
+                echo "::error::Commits are on $BRANCH but the PR could not be opened. With TAP_PR_TOKEN set, check it has 'Pull requests: read and write' on this repository and has not expired; without it, enable Settings -> Actions -> General -> 'Allow GitHub Actions to create and approve pull requests'. Either way the manifests are safe on $BRANCH - open a PR from it by hand to land them now."
               else
                 echo "::error::could not open a PR from $BRANCH: $url"
               fi
