@@ -13,6 +13,10 @@ name: Notify leviath.dev
 #
 # Fires on the merge, whichever way it happened — auto-merge, a direct merge once
 # the checks were green, or a human merging by hand.
+#
+# Needs TAP_PR_TOKEN to have GEMISIS/leviath.dev in its repository access, with
+# `Actions: read and write` alongside the pull-request permission it already has.
+# See the note on the step below for why it is Actions and not Contents.
 
 on:
   push:
@@ -42,28 +46,49 @@ jobs:
           sparse-checkout: Formula
           sparse-checkout-cone-mode: false
 
-      - name: Dispatch
+      # `workflow run`, not a repository dispatch, and the reason is which
+      # permission each one costs. A fine-grained PAT carries ONE permission set
+      # across every repository you select for it - there is no per-repository
+      # matrix - so whatever this needs on leviath.dev, TAP_PR_TOKEN also gains
+      # here.
+      #
+      #   repository_dispatch   Contents: write   would let this token push code
+      #                                           to this repository, and the
+      #                                           header of bump-manifests.yml
+      #                                           promises in as many words that
+      #                                           it cannot.
+      #   workflow_dispatch     Actions: write    lets it start a workflow. It
+      #                                           still cannot push a commit,
+      #                                           read a secret, or bypass the
+      #                                           ruleset.
+      #
+      # Same deploy either way; the site rebuilds from source and reads the
+      # version out of the formula, so nothing needs to travel in a payload.
+      - name: Ask leviath.dev to redeploy
         env:
           # A PAT, because GITHUB_TOKEN is scoped to this repository and cannot
-          # reach another one. The same token the runtime uses for its own
-          # dispatch; it needs leviath.dev in its repository access.
-          GH_TOKEN: ${{ secrets.SITE_DISPATCH_TOKEN }}
+          # reach another one.
+          GH_TOKEN: ${{ secrets.TAP_PR_TOKEN }}
         run: |
           set -euo pipefail
-
-          if [ -z "${GH_TOKEN:-}" ]; then
-            # Not a failure. The site's daily refresh still catches this within a
-            # day, so an unset secret costs freshness rather than correctness, and
-            # failing here would put a red X on a bump that landed perfectly well.
-            echo "::warning::SITE_DISPATCH_TOKEN is not set, so leviath.dev will not refresh until its daily run. Add a PAT with access to that repository to make this immediate."
-            exit 0
-          fi
 
           version=$(sed -n 's/^[[:space:]]*version[[:space:]]*"\([^"]*\)".*/\1/p' Formula/leviath.rb | head -1)
           echo "stable formula now declares ${version:-unknown}"
 
-          jq -nc --arg version "$version" \
-            '{event_type:"tap-updated", client_payload:{channel:"stable", version:$version}}' \
-            | gh api repos/GEMISIS/leviath.dev/dispatches --input -
+          if [ -z "${GH_TOKEN:-}" ]; then
+            # Not a failure. The site keeps a daily refresh, so a missing secret
+            # costs freshness rather than correctness, and a red X here would say
+            # something untrue about a bump that landed perfectly well.
+            echo "::warning::TAP_PR_TOKEN is not set, so leviath.dev will not refresh until its daily run."
+            exit 0
+          fi
 
-          echo "Asked leviath.dev to redeploy." >> "$GITHUB_STEP_SUMMARY"
+          if ! err=$(gh workflow run deploy.yml --repo GEMISIS/leviath.dev 2>&1); then
+            # Named separately from "not set", because this is the failure that
+            # actually happens: the token exists but has not been given
+            # leviath.dev, or has it without Actions: write.
+            echo "::warning::Could not start the leviath.dev deploy, so it will not refresh until its daily run. Give TAP_PR_TOKEN access to GEMISIS/leviath.dev with 'Actions: read and write'. GitHub said: ${err}"
+            exit 0
+          fi
+
+          echo "Asked leviath.dev to redeploy for $version." >> "$GITHUB_STEP_SUMMARY"
