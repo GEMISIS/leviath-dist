@@ -43,6 +43,14 @@ name: Bump manifests
 #                                 sat a version behind until somebody noticed.
 #                                 A PR opened by a real identity fires the event
 #                                 normally and Lint runs on its own.
+#   auto-merge  →  github.token   and this is the part that was wrong. Arming
+#                                 auto-merge is `enablePullRequestAutoMerge`,
+#                                 which GitHub gates on *write access to the
+#                                 repository's contents* - it is a promise to
+#                                 push a merge commit later, not a pull-request
+#                                 edit. TAP_PR_TOKEN has pull requests and
+#                                 nothing else, exactly as documented below, so
+#                                 it opened every PR and could never arm one.
 #
 # TAP_PR_TOKEN is a fine-grained PAT scoped to this repository with
 # `Pull requests: read and write` and nothing else. It cannot push code and it
@@ -232,6 +240,7 @@ jobs:
       # is still opened and still carries the right manifests, it just needs a
       # human to approve its checks, which is where this started.
       - name: Open or update the pull request
+        id: pr
         if: steps.write.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.TAP_PR_TOKEN || github.token }}
@@ -274,10 +283,44 @@ jobs:
             echo "Opened PR: $url"
           fi
 
-          # Lands it once Lint passes, if the repo allows auto-merge. Nothing
-          # breaks when it does not — the PR just waits for a human.
-          if ! gh pr merge "$url" --auto --squash 2>/dev/null; then
-            echo "::notice::Auto-merge is off for this repo, so $url needs a manual merge. Enable it in Settings → General → Pull Requests to land these unattended."
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "$url" >> "$GITHUB_STEP_SUMMARY"
+
+      # Separate step for one reason: a different token. Arming auto-merge needs
+      # contents write (see the header), which is what `github.token` has here
+      # and what TAP_PR_TOKEN deliberately does not. Opening the PR needs a real
+      # identity; arming it does not care who opened it.
+      #
+      # Two things land it once the three Lint checks report green: auto-merge
+      # if the PR is still waiting on them, and a plain merge if they already
+      # finished — GitHub refuses to *arm* auto-merge on a pull request that has
+      # nothing left to wait for, and these three checks are fast enough to beat
+      # this step. Neither path can merge a red PR: the ruleset is what enforces
+      # that, and this token cannot bypass it.
+      - name: Land it
+        if: steps.write.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          URL: ${{ steps.pr.outputs.url }}
+        run: |
+          set -uo pipefail
+
+          if auto=$(gh pr merge "$URL" --auto --squash 2>&1); then
+            echo "Auto-merge armed; $URL lands when Lint reports green."
+            exit 0
           fi
 
-          echo "$url" >> "$GITHUB_STEP_SUMMARY"
+          if now=$(gh pr merge "$URL" --squash 2>&1); then
+            echo "Checks had already passed, so $URL was merged directly."
+            exit 0
+          fi
+
+          # Both failed, so say what each one actually said rather than guessing
+          # at a cause. The previous version of this step discarded these two
+          # messages and asserted the repo had auto-merge switched off, which was
+          # never true and sent the search in the wrong direction for weeks.
+          echo "::error::$URL could not be landed and needs a manual merge. Arming auto-merge said: ${auto}. Merging now said: ${now}."
+          # Red, because the manifests not reaching main is this job not having
+          # done its job. The bump is safe on its branch either way, and a green
+          # run with an open PR behind it is how the last one went unnoticed.
+          exit 1
