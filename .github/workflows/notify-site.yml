@@ -83,11 +83,20 @@ jobs:
             exit 0
           fi
 
-          if ! err=$(gh workflow run deploy.yml --repo GEMISIS/leviath.dev 2>&1); then
+          # `gh api` rather than `gh workflow run`, which does the same thing
+          # through one more step. `gh workflow run` with no --ref first asks
+          # GraphQL for the repository's default branch, so a token that cannot
+          # see the repository fails there, on a lookup, and reports "Could not
+          # resolve to a Repository" - which reads like the repository is gone
+          # rather than like a permissions problem. Naming the ref outright
+          # skips the lookup and puts the real answer in the error.
+          if ! err=$(gh api --method POST \
+              repos/GEMISIS/leviath.dev/actions/workflows/deploy.yml/dispatches \
+              -f ref=main 2>&1); then
             # Named separately from "not set", because this is the failure that
             # actually happens: the token exists but has not been given
             # leviath.dev, or has it without Actions: write.
-            echo "::warning::Could not start the leviath.dev deploy, so it will not refresh until its daily run. Give TAP_PR_TOKEN access to GEMISIS/leviath.dev with 'Actions: read and write'. GitHub said: ${err}"
+            echo "::warning::Could not start the leviath.dev deploy, so it will not refresh until its daily run. Check that TAP_PR_TOKEN lists GEMISIS/leviath.dev under Repository access AND has 'Actions: read and write' - they are two separate settings and both are needed. GitHub said: ${err}"
             exit 0
           fi
 
