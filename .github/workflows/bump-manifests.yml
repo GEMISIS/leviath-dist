@@ -86,6 +86,10 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  # To start notify-site.yml once the bump has actually landed. The push that
+  # lands it cannot do that itself: GitHub performs a GITHUB_TOKEN auto-merge as
+  # GITHUB_TOKEN, and a push from GITHUB_TOKEN creates no workflow run.
+  actions: write
 
 concurrency:
   # Serialize per channel: two releases landing together must not race on the
@@ -305,22 +309,52 @@ jobs:
         run: |
           set -uo pipefail
 
+          merged=false
           if auto=$(gh pr merge "$URL" --auto --squash 2>&1); then
             echo "Auto-merge armed; $URL lands when Lint reports green."
-            exit 0
-          fi
-
-          if now=$(gh pr merge "$URL" --squash 2>&1); then
+            # And then wait for it, which is not impatience. GitHub performs an
+            # auto-merge armed by GITHUB_TOKEN as GITHUB_TOKEN, and a push from
+            # GITHUB_TOKEN creates no workflow run at all - so notify-site.yml's
+            # `push` trigger never sees these land. Three bumps proved it: the
+            # one PR a human merged that day fired Lint on push, and the three
+            # the bot merged fired nothing.
+            #
+            # Lint is three syntax jobs, so this normally resolves in well under
+            # a minute. The cap is generous because the cost of overrunning it
+            # is only a slower website.
+            for _ in $(seq 1 30); do
+              sleep 10
+              if [ "$(gh pr view "$URL" --json state --jq .state)" = "MERGED" ]; then
+                merged=true
+                break
+              fi
+            done
+          elif now=$(gh pr merge "$URL" --squash 2>&1); then
             echo "Checks had already passed, so $URL was merged directly."
+            merged=true
+          else
+            # Both failed, so say what each one actually said rather than
+            # guessing at a cause. An earlier version of this step discarded
+            # these two messages and asserted the repo had auto-merge switched
+            # off, which was never true and sent the search in the wrong
+            # direction for weeks.
+            echo "::error::$URL could not be landed and needs a manual merge. Arming auto-merge said: ${auto}. Merging now said: ${now}."
+            # Red, because the manifests not reaching main is this job not having
+            # done its job. The bump is safe on its branch either way, and a green
+            # run with an open PR behind it is how the last one went unnoticed.
+            exit 1
+          fi
+
+          if [ "$merged" != true ]; then
+            echo "::warning::$URL had not merged after five minutes. Auto-merge is still armed and will land it, but leviath.dev will not hear about it until its daily refresh."
             exit 0
           fi
 
-          # Both failed, so say what each one actually said rather than guessing
-          # at a cause. The previous version of this step discarded these two
-          # messages and asserted the repo had auto-merge switched off, which was
-          # never true and sent the search in the wrong direction for weeks.
-          echo "::error::$URL could not be landed and needs a manual merge. Arming auto-merge said: ${auto}. Merging now said: ${now}."
-          # Red, because the manifests not reaching main is this job not having
-          # done its job. The bump is safe on its branch either way, and a green
-          # run with an open PR behind it is how the last one went unnoticed.
-          exit 1
+          # Hand off to notify-site.yml rather than dispatching the site from
+          # here, so the token and the URL for that live in one file. This is
+          # allowed where the push above was not: workflow_dispatch and
+          # repository_dispatch are the two documented exceptions to
+          # GITHUB_TOKEN-triggered events creating no runs.
+          if ! err=$(gh workflow run notify-site.yml 2>&1); then
+            echo "::warning::Landed $URL but could not ask leviath.dev to refresh, so it will wait for its daily run. GitHub said: ${err}"
+          fi
