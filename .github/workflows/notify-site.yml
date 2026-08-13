@@ -1,0 +1,69 @@
+name: Notify leviath.dev
+
+# leviath.dev prints the version a reader is about to install, and it reads that
+# number from `Formula/leviath.rb` in this repository — the same file `brew` reads.
+# That is deliberate: every install route the site offers ends here, since its
+# `curl | sh` snippet is a shim that forwards to the install.sh below. Taking the
+# number from the runtime's release tag instead is what let the page advertise
+# 0.3.7 while `brew upgrade` was still a no-op on 0.2.0.
+#
+# So this repository, not the runtime, owns the event that changes the site. A
+# promotion upstream does not: until a bump lands here, what a reader installs has
+# not moved, and the page saying the older number is correct rather than stale.
+#
+# Fires on the merge, whichever way it happened — auto-merge, a direct merge once
+# the checks were green, or a human merging by hand.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # The three files that decide what a reader ends up with. Everything else
+      # here — README, lint config, the download strategy — leaves the site's
+      # answer unchanged, and a deploy per unrelated commit is the waste the cron
+      # was already criticised for.
+      - 'Formula/**'
+      - 'install.sh'
+      - 'install.ps1'
+  workflow_dispatch:
+
+# Read-only, and only to look up the version for the log line. The dispatch itself
+# reaches another repository, which no GITHUB_TOKEN permission can grant.
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Refresh leviath.dev
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: Formula
+          sparse-checkout-cone-mode: false
+
+      - name: Dispatch
+        env:
+          # A PAT, because GITHUB_TOKEN is scoped to this repository and cannot
+          # reach another one. The same token the runtime uses for its own
+          # dispatch; it needs leviath.dev in its repository access.
+          GH_TOKEN: ${{ secrets.SITE_DISPATCH_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${GH_TOKEN:-}" ]; then
+            # Not a failure. The site's daily refresh still catches this within a
+            # day, so an unset secret costs freshness rather than correctness, and
+            # failing here would put a red X on a bump that landed perfectly well.
+            echo "::warning::SITE_DISPATCH_TOKEN is not set, so leviath.dev will not refresh until its daily run. Add a PAT with access to that repository to make this immediate."
+            exit 0
+          fi
+
+          version=$(sed -n 's/^[[:space:]]*version[[:space:]]*"\([^"]*\)".*/\1/p' Formula/leviath.rb | head -1)
+          echo "stable formula now declares ${version:-unknown}"
+
+          jq -nc --arg version "$version" \
+            '{event_type:"tap-updated", client_payload:{channel:"stable", version:$version}}' \
+            | gh api repos/GEMISIS/leviath.dev/dispatches --input -
+
+          echo "Asked leviath.dev to redeploy." >> "$GITHUB_STEP_SUMMARY"
