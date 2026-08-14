@@ -1,5 +1,5 @@
 {
-    "version": "0.3.9-alpha",
+    "version": "0.3.10-alpha",
     "description": "A structured agent runtime for LLMs (nightly alpha)",
     "homepage": "https://leviath.dev",
     "license": "MIT",
