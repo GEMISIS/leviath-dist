@@ -7,7 +7,7 @@ class LeviathAlpha < Formula
   desc "A structured agent runtime for LLMs (nightly alpha)"
   homepage "https://leviath.dev"
   license "MIT"
-  version "0.5.3-alpha"
+  version "0.5.4-alpha"
 
   on_macos do
     if Hardware::CPU.arm?
