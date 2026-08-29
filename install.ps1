@@ -1,14 +1,20 @@
 # Leviath installer for Windows
 #
-# Usage (PowerShell):
+# Usage (PowerShell - paste into an open PowerShell, not via `powershell -c` from cmd,
+# which managed machines refuse as a suspicious launch):
 #   irm https://raw.githubusercontent.com/GEMISIS/leviath-dist/main/install.ps1 | iex
+#   $env:LEVIATH_CHANNEL = 'beta'; irm ... | iex     # pick a channel
 #
 # Or download this file and run:
 #   .\install.ps1 -Channel alpha    # alpha (default) | beta | stable
 
 param(
+    # Defaults from LEVIATH_CHANNEL when it is set, as install.sh does: the
+    # leviath.dev stub used to hand the channel over that way and this script
+    # never read it, so every install from the site landed on alpha while the
+    # stub said stable. The parameter still wins when given.
     [ValidateSet("alpha", "beta", "stable")]
-    [string]$Channel = "alpha"
+    [string]$Channel = $(if ($env:LEVIATH_CHANNEL) { $env:LEVIATH_CHANNEL } else { "alpha" })
 )
 
 $ErrorActionPreference = "Stop"
